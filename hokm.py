@@ -1,16 +1,11 @@
 import numpy as np
 
 def compare(first_card, second_card,  trump_suit):
-    """  In every sub-game, firstplayer (agent) deliberately choose the card,
-    then second player (player) should choose their card.
-    In first sub-game, last round winner choose the TRUMP SUIT.
-
-    This function gets First player's card and Second player's card and trump suit.
-    If the fist player's card wins the second player's card, the result is True,
-    otherwise False
-    
     """
-    
+    This function returns the result of the sub-game based on the suit of the trump card in each stage.
+    The result is 1 if player one wins, otherwise 0.
+    """
+
     assert trump_suit in ["spades", "clubs", "hearts", "diamonds"]
     assert first_card.value in range(2,15)
     assert second_card.value in range(2,15)
@@ -34,9 +29,9 @@ def compare(first_card, second_card,  trump_suit):
             return False
 
 
-def legitimate_card(card, facing_card,  trump_suit, player_cards):
-    """  The function return 1 if the second player's card is legitimate'
-        Otherwise return 0.
+def legitimate_card(card, facing_card, trump_suit, player_cards):
+    """  It returns 1 if player two's card is legitimate based on player one's card,
+         the trump suit, and all cards in player two's deck.
     """
     
     if card.suit == facing_card.suit:
@@ -44,19 +39,22 @@ def legitimate_card(card, facing_card,  trump_suit, player_cards):
     
     elif card.suit ==  trump_suit:
         return 1
+
     else:
+
         all_possible_suits = [i.suit for i in player_cards]
         if facing_card.suit in all_possible_suits or\
                trump_suit in all_possible_suits:
             return 0
+
         else:
             return 1
     
 
 class Card:
 
-    """ Every Card has a value between "2,3,4,5,6,7,8,9,10,J,Q,K,Ace"
-        and hase a suits, this class represents each card.
+    """ Each Card has a value between "2,3,4,5,6,7,8,9,10,J,Q,K,Ace" and a suit.
+        This class represents each card by this two characteristics.
     """
 
     def __init__(self, value, suit):
@@ -66,23 +64,18 @@ class Card:
 
 class Hokm_game():
     
-    """ In two-player hokm, after shuffling 52-card deck, each player gets 13 random cards.
-    so half of the deck is out of game, 
-    This class first generate each player's cards, then Agent in first sub-game should choose 
-    the trump suit (the  defult value for trump suit is *diamonds*), the trump suit wouldn'the
-    change during all 13 stage of the game.
+    """ 
+    First Player => Agent
+    Second Player => Player
 
-    The second player should choose the second card, accroding to the rules.
-    In situations where the second player's card is illegal, the code return an error but
-    the second player can choose another card.
+    The class initiates the first five cards for the first player and 13 cards for each player. 
+    `first_five_cards` provides access to the first five cards.
 
-    After the second-player plays their card, the sub-game will be finished, the used card can be use again,
-    and the Agent should play another card to start next sub-game.
+    13-cards deck for both players are accessible by `agent_cards`, `player_cards`.
 
-    after the 13 sub-games, the game will be finished. "done" indicates that the all sub-games finished.
+    In the first stage, player one chooses a trump suit based on the first five cards. After this, the value `trump_suit_decided` is True.
 
-    at every level of the game, it's possible to access:
-    all sub-games that first player wins by *agent_wins
+    The sub-game will end after the second player chooses the eligible card, and the first player should begin a new one until the last (13th) sub-game is played.
     """
 
     done = False
@@ -96,45 +89,53 @@ class Hokm_game():
         self.stage = 1
         self.player_cards = self.cards[len(self.cards)//2:]
         self.agent_cards = self.cards[:len(self.cards)//2]
+        self.first_five_cards =self.agent_cards[:5]
         self.agent_card = None
         self.agent_decided = False
-        self.trump_suit = "diamonds"
+        self.trump_suit_decided = False
+
+
+    def trump_suit(self, suit):
+
+        if self.stage == 1:
+            self.trump_suit = suit
+            self.trump_suit_decided = True
 
         
-    def agent_action(self, card, *trump_suit):
-        if self.stage == 1:
-            self.trump_suit = trump_suit[0]
-        if not(self.done):
+    def agent_action(self, card):
+
+        if not(self.trump_suit_decided):
+            print("Trump Suit should be chosen first")
+
+        elif not(self.done):
             self.agent_card = card
             self.agent_decided = True
         
     
     def player_action(self, card):
+
         assert len(self.player_cards) == len(self.agent_cards)
-        if self.done:
-            pass
-        elif not(self.agent_decided):
-            print("Agent should choose card first")
+
+        if not(self.agent_decided):
+            print("The agent should choose the card first")
         
         elif not(legitimate_card(card, self.agent_card, self.trump_suit, self.player_cards)):
-            print("You can't play this card!")
+            print("This card is not playable.")
         
-        else:
+        if not(self.done):
             
             self.player_card = card
 
             if compare(self.agent_card, self.player_card, self.trump_suit):
-                print("[Agent Wins]")
                 self.agent_wins += 1
                 
             else:
-                print("[Player Wins]")
                 self.player_wins += 1
 
             self.stage += 1
             
             
-
+            self.agent_decided = False
             self.agent_cards = np.delete(self.agent_cards, np.where(self.agent_cards == self.agent_card))
             self.player_cards = np.delete(self.player_cards, np.where(self.player_cards == self.player_card))
 
