@@ -1,7 +1,7 @@
 from hokm import Hokm_game
 import numpy as np
 
-#Creat on single game
+#Creat a single game
 NewGame = Hokm_game()
 
 #continue game until sub-games finished
